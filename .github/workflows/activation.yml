@@ -6,6 +6,10 @@ jobs:
     name: Request manual activation file 🔑
     runs-on: ubuntu-latest
     steps:
+      - name: Check out unity project
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Get Unity Version
         id: getUnityVersion
         uses: akiojin/unity-get-version-github-action@v1.1
