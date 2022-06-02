@@ -6,12 +6,15 @@ jobs:
     name: Request manual activation file 🔑
     runs-on: ubuntu-latest
     steps:
+      - name: Get Unity Version
+        id: getUnityVersion
+        uses: akiojin/unity-get-version-github-action@v1.1
       # Request manual activation file
       - name: Request manual activation file
         id: getManualLicenseFile
         uses: game-ci/unity-request-activation-file@v2
         with:
-          unityVersion: 2020.3.16f1
+          unityVersion: ${{ steps.getUnityVersion.outputs.version }}
       # Upload artifact (Unity_v20XX.X.XXXX.alf)
       - name: Expose as artifact
         uses: actions/upload-artifact@v2
