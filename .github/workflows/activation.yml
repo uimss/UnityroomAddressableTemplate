@@ -12,13 +12,13 @@ jobs:
           fetch-depth: 0
       - name: Get Unity Version
         id: getUnityVersion
-        uses: akiojin/unity-get-version-github-action@v1.1
+        uses: appegy/unity-version-action@v1
       # Request manual activation file
       - name: Request manual activation file
         id: getManualLicenseFile
         uses: game-ci/unity-request-activation-file@v2
         with:
-          unityVersion: ${{ steps.getUnityVersion.outputs.version }}
+          unityVersion: ${{ steps.getUnityVersion.outputs.unity-version }}
       # Upload artifact (Unity_v20XX.X.XXXX.alf)
       - name: Expose as artifact
         uses: actions/upload-artifact@v2
