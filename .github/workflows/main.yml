@@ -1,0 +1,62 @@
+name: Build WebGL for unityroom and Publish StreamingAssets
+on:
+  push:
+    branches: [ ci ]
+  workflow_dispatch: {}
+env:
+  PROJECT_NAME: your-project
+  PUBLISH_REPOSITORY: your-account/your-project-repo
+jobs:
+  build:
+    name: Run the WebGL build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out unity project
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Cache Library
+        uses: actions/cache@v2
+        with:
+          path: Library
+          key: Library-WebGL
+          restore-keys: Library-
+      - name: Get Unity Bundle Version
+        uses: KageKirin/get-unity-bundle-version@v1.0.0
+        id: getBundleVersion
+      - name: Run the WebGL build
+        uses: game-ci/unity-builder@v2.0.4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          buildsPath: build
+          buildName: ${{ env.PROJECT_NAME }}
+          targetPlatform: WebGL
+          versioning: Custom
+          version: ${{ steps.getBundleVersion.outputs.version }}
+          customParameters: -enableUnityroomBuilder
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-${{ steps.getBundleVersion.outputs.version }}
+          path: build
+      # - name: Publish to GitHub Pages
+      #   uses: peaceiris/actions-gh-pages@v3.7.3
+      #   with:
+      #     personal_token: ${{ secrets.PERSONAL_TOKEN }}
+      #     publish_branch: gh-pages
+      #     publish_dir: build/WebGL/${{ env.PROJECT_NAME }}/StreamingAssets
+      #     external_repository: ${{ env.PUBLISH_REPOSITORY }}
+      #     destination_dir: public/${{ steps.getBundleVersion.outputs.version }}/StreamingAssets
+      #     keep_files: true
+      - name: Publish to Cloudflare Pages
+        uses: peaceiris/actions-gh-pages@v3.7.3
+        with:
+          personal_token: ${{ secrets.PERSONAL_TOKEN }}
+          publish_branch: cf-pages
+          publish_dir: build/WebGL/${{ env.PROJECT_NAME }}/StreamingAssets
+          external_repository: ${{ env.PUBLISH_REPOSITORY }}
+          destination_dir: public/${{ steps.getBundleVersion.outputs.version }}/StreamingAssets
+          keep_files: true
