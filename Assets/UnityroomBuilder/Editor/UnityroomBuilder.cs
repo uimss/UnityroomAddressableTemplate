@@ -102,10 +102,10 @@ public class UnityroomBuilder
         try
         {
             // NOTICE: Deeply dependent on loader.js generation logic
-            var originalUrl = $"new URL(l.streamingAssetsUrl,document.URL)";
-            var newUrl = $"new URL(\"{newStreamingAssetUrl}\")";
-            Debug.Log($"Replace StreamingAssetUrl file: {loaderJsPath} from: {originalUrl} to: {newUrl}");
-            ReplaceStringInFile(loaderJsPath, originalUrl, newUrl);
+            var originalUrlPattern = @"\w+\.streamingAssetsUrl,document\.URL";
+            var newUrl = $"\"{newStreamingAssetUrl}\"";
+            Debug.Log($"Replace StreamingAssetUrl file: {loaderJsPath} from: {originalUrlPattern} to: {newUrl}");
+            ReplaceStringInFile(loaderJsPath, originalUrlPattern, newUrl);
             return true;
         }
         catch (IOException e)
