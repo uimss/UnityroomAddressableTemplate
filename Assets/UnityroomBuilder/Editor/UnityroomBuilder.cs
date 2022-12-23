@@ -2,11 +2,15 @@ using System.IO;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using UnityEngine;
+using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using System;
+using System.Text.RegularExpressions;
 
-public class UnityroomBuilder
+public class UnityroomBuilder : IPostprocessBuildWithReport
 {
+    public int callbackOrder { get; } = 1;
+
     // Build local Unity Editor
     [MenuItem("Tools/Build WebGL for unityroom")]
     public static void BuildGame()
@@ -15,24 +19,14 @@ public class UnityroomBuilder
         BuildGameImpl(options);
     }
 
-    // Build command line (ex. Github Actions)
-    [PostProcessBuildAttribute(1)]
-    public static void OnPostprocessBuild(BuildTarget target, string pathToBuiltProject)
+    public void OnPostprocessBuild(BuildReport report)
     {
         var args = Environment.GetCommandLineArgs();
-        if (target == BuildTarget.WebGL
+        if (report.summary.platform == BuildTarget.WebGL
             && args != null
             && Array.IndexOf(args, "-enableUnityroomBuilder") > -1)
         {
-            var replaceResult = ReplaceStreamingAssetUrl(pathToBuiltProject);
-            if (replaceResult)
-            {
-                Debug.Log("Replace StreamingAssetUrl succeeded.");
-            }
-            else
-            {
-                Debug.Log("Replace StreamingAssetUrl failed.");
-            }
+            WebGLBuildUtility.ReplaceStreamingAssetUrl(report.summary.outputPath);
         }
     }
 
@@ -56,15 +50,10 @@ public class UnityroomBuilder
         {
             Debug.Log("Build succeeded: " + summary.totalSize + " bytes");
 
-            var replaceResult = ReplaceStreamingAssetUrl(buildPlayerOptions.locationPathName);
+            var replaceResult = WebGLBuildUtility.ReplaceStreamingAssetUrl(buildPlayerOptions.locationPathName);
             if (replaceResult)
             {
-                Debug.Log("Replace StreamingAssetUrl succeeded.");
                 EditorUtility.RevealInFinder(buildPlayerOptions.locationPathName);
-            }
-            else
-            {
-                Debug.Log("Replace StreamingAssetUrl failed.");
             }
         }
         else if (summary.result == BuildResult.Failed)
@@ -80,8 +69,11 @@ public class UnityroomBuilder
             Debug.Log("Build failed (unknown)");
         }
     }
+}
 
-    static bool ReplaceStreamingAssetUrl(string buildPath)
+public static class WebGLBuildUtility
+{
+    public static bool ReplaceStreamingAssetUrl(string buildPath)
     {
         var searchPath = Path.Combine(buildPath, "Build");
         var searchResults = Directory.GetFiles(searchPath, "*loader.js");
@@ -115,7 +107,7 @@ public class UnityroomBuilder
         }
     }
 
-    static void ReplaceStringInFile(string filePath, string replaceText, string withText)
+    static void ReplaceStringInFile(string filePath, string pattern, string replacement)
     {
         var tmpFilePath = filePath + ".tmp";
         var backupFilePath = filePath + ".bak";
@@ -125,7 +117,7 @@ public class UnityroomBuilder
         while (!streamReader.EndOfStream)
         {
             var data = streamReader.ReadLine();
-            data = data.Replace(replaceText, withText);
+            data = Regex.Replace(data, pattern, replacement);
             streamWriter.WriteLine(data);
         }
 
